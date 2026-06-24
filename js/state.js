@@ -234,20 +234,26 @@
     return image.fileName || image.displayName || "Untitled image";
   }
 
-  function nextImage() {
+  function nextImage(loop) {
     if (!state.images.length) {
       return;
     }
     const index = getActiveIndex();
+    if (!loop && index === state.images.length - 1) {
+      return;
+    }
     const nextIndex = index === -1 ? 0 : (index + 1) % state.images.length;
     setActive(state.images[nextIndex].id);
   }
 
-  function previousImage() {
+  function previousImage(loop) {
     if (!state.images.length) {
       return;
     }
     const index = getActiveIndex();
+    if (!loop && index <= 0) {
+      return;
+    }
     const previousIndex = index <= 0 ? state.images.length - 1 : index - 1;
     setActive(state.images[previousIndex].id);
   }

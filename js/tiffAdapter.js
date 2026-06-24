@@ -65,7 +65,8 @@
         hasTransparency: window.ImageViewer.Thumbnail.detectTransparency(canvas, width, height),
         sourceMode: pageCount > 1 ? "Decoded TIFF " + (index + 1) + "/" + pageCount : "Decoded TIFF",
         pageNumber: index + 1,
-        pageCount
+        pageCount,
+        sourceFile: file
       });
     }
 

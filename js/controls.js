@@ -8,6 +8,8 @@
   let backdropButton;
   let backdropMode = "black";
   let backdropEnabled = false;
+  let loopImages = false;
+  let lastSnapshot = null;
   let variantControl;
   let variantButton;
   let variantValue;
@@ -27,6 +29,7 @@
     variantMenu = document.getElementById("variantMenu");
 
     clearImagesBtn.addEventListener("click", window.ImageViewer.State.clearImages);
+    downloadDeckBtn.addEventListener("click", handleDownloadDeck);
     toolbar.addEventListener("click", handleToolbarClick);
     variantButton.addEventListener("click", toggleVariantMenu);
     variantButton.addEventListener("keydown", handleVariantButtonKeyDown);
@@ -43,20 +46,21 @@
 
   function handleSettingsChange(nextSettings) {
     backdropMode = nextSettings.transparencyBackdrop === "white" ? "white" : "black";
+    loopImages = nextSettings.loopImages === true;
     updateBackdropButton();
+    updateNavButtons();
   }
 
   function render(snapshot) {
+    lastSnapshot = snapshot;
     const hasImages = snapshot.images.length > 0;
-    const hasMultiple = snapshot.images.length > 1;
     const fullscreenActive = window.ImageViewer.Viewer.isFullscreen();
     const activeImage = snapshot.images.find((image) => image.id === snapshot.activeId) || null;
     clearImagesBtn.disabled = !hasImages;
     downloadDeckBtn.disabled = !hasImages;
 
     renderVariantControl(activeImage);
-    setButtonDisabled("previous", !hasMultiple);
-    setButtonDisabled("next", !hasMultiple);
+    updateNavButtons();
     setButtonDisabled("zoom-out", !hasImages);
     setButtonDisabled("zoom-in", !hasImages);
     setButtonDisabled("fit", !hasImages);
@@ -66,6 +70,14 @@
 
     backdropEnabled = Boolean(activeImage && activeImage.hasTransparency);
     updateBackdropButton();
+  }
+
+  // Export the current deck (in display order, with labels) as a .deck file.
+  // The button is disabled when empty (see render), so this is a no-op then.
+  function handleDownloadDeck() {
+    if (lastSnapshot && lastSnapshot.images.length) {
+      window.ImageViewer.DeckFile.download(lastSnapshot.images);
+    }
   }
 
   function handleToolbarClick(event) {
@@ -91,10 +103,10 @@
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      window.ImageViewer.State.nextImage();
+      window.ImageViewer.State.nextImage(loopImages);
     } else if (event.key === "ArrowLeft") {
       event.preventDefault();
-      window.ImageViewer.State.previousImage();
+      window.ImageViewer.State.previousImage(loopImages);
     } else if (event.key === "+" || event.key === "=") {
       event.preventDefault();
       window.ImageViewer.Viewer.zoomBy(1.12);
@@ -106,9 +118,9 @@
 
   function runAction(action) {
     if (action === "previous") {
-      window.ImageViewer.State.previousImage();
+      window.ImageViewer.State.previousImage(loopImages);
     } else if (action === "next") {
-      window.ImageViewer.State.nextImage();
+      window.ImageViewer.State.nextImage(loopImages);
     } else if (action === "zoom-out") {
       window.ImageViewer.Viewer.zoomBy(1 / 1.12);
     } else if (action === "zoom-in") {
@@ -377,6 +389,23 @@
 
   function getVariantOptionId(entryId) {
     return "variant-option-" + entryId;
+  }
+
+  // Prev/next are disabled with fewer than two images, and — when looping is
+  // off — also at the ends of the deck so the button isn't a silent no-op.
+  function updateNavButtons() {
+    if (!lastSnapshot) {
+      return;
+    }
+
+    const images = lastSnapshot.images;
+    const hasMultiple = images.length > 1;
+    const activeIndex = images.findIndex((image) => image.id === lastSnapshot.activeId);
+    const atFirst = activeIndex <= 0;
+    const atLast = activeIndex === images.length - 1;
+
+    setButtonDisabled("previous", !hasMultiple || (!loopImages && atFirst));
+    setButtonDisabled("next", !hasMultiple || (!loopImages && atLast));
   }
 
   function setButtonDisabled(action, disabled) {

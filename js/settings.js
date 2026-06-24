@@ -7,7 +7,8 @@
     toolbarPosition: "bottom",
     fullscreenToolbarPosition: "bottom-center",
     fullscreenShowImageName: true,
-    transparencyBackdrop: "black"
+    transparencyBackdrop: "black",
+    loopImages: false
   };
   const VALID_VALUES = {
     themeMode: new Set(["light", "dark", "auto"]),
@@ -207,12 +208,13 @@
       nextSettings.transparencyBackdrop = DEFAULT_SETTINGS.transparencyBackdrop;
     }
     nextSettings.fullscreenShowImageName = nextSettings.fullscreenShowImageName !== false;
+    nextSettings.loopImages = nextSettings.loopImages === true;
 
     return nextSettings;
   }
 
   function isValidSetting(name, value) {
-    if (name === "fullscreenShowImageName") {
+    if (name === "fullscreenShowImageName" || name === "loopImages") {
       return typeof value === "boolean";
     }
 

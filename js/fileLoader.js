@@ -122,6 +122,20 @@
   }
 
   async function loadFiles(files) {
+    const fileArray = Array.from(files || []);
+
+    // A .deck is an "open document" action: it replaces the current deck, then
+    // appends any other files dropped/picked alongside it. Route to the deck
+    // flow if the batch contains one; otherwise load as normal images.
+    if (fileArray.some(isDeckFile)) {
+      await openDeckBatch(fileArray);
+      return;
+    }
+
+    await loadImageFiles(fileArray);
+  }
+
+  async function loadImageFiles(files) {
     const imageFiles = files.filter(isSupportedCandidate);
 
     if (!imageFiles.length) {
@@ -138,20 +152,9 @@
 
     for (const file of imageFiles) {
       try {
-        if (window.ImageViewer.TiffAdapter.isTiffFile(file)) {
-          const pages = await window.ImageViewer.TiffAdapter.decodeFile(file);
-          loadedBatch.push.apply(loadedBatch, pages);
-          loadedCount += pages.length;
-        } else if (window.ImageViewer.IcoAdapter.isIcoFile(file)) {
-          loadedBatch.push(await decodeIcoFile(file));
-          loadedCount += 1;
-        } else if (isSvgFile(file)) {
-          loadedBatch.push(await decodeSvgFile(file));
-          loadedCount += 1;
-        } else {
-          loadedBatch.push(await decodeNativeImage(file));
-          loadedCount += 1;
-        }
+        const produced = await decodeOneFile(file);
+        loadedBatch.push.apply(loadedBatch, produced);
+        loadedCount += produced.length;
       } catch (error) {
         skipped.push(file.name);
       }
@@ -174,6 +177,93 @@
     } else if (loadedCount) {
       window.ImageViewer.State.setMessage("Loaded " + loadedCount + " image" + (loadedCount === 1 ? "" : "s"));
     }
+  }
+
+  // Decode a single file into one or more image objects (a multi-page TIFF
+  // expands to one per page). Shared by normal loading and .deck import so both
+  // paths produce identical image objects through the same decoders.
+  async function decodeOneFile(file) {
+    if (window.ImageViewer.TiffAdapter.isTiffFile(file)) {
+      return await window.ImageViewer.TiffAdapter.decodeFile(file);
+    }
+    if (window.ImageViewer.IcoAdapter.isIcoFile(file)) {
+      return [await decodeIcoFile(file)];
+    }
+    if (isSvgFile(file)) {
+      return [await decodeSvgFile(file)];
+    }
+    return [await decodeNativeImage(file)];
+  }
+
+  // Open-then-append: the first .deck in the batch replaces the current deck
+  // (clear + load); every other file (loose images or additional decks) is
+  // appended after it in drop order. Everything is decoded BEFORE state is
+  // touched, so a corrupt/invalid deck never wipes the current images.
+  async function openDeckBatch(files) {
+    const firstDeckIndex = files.findIndex(isDeckFile);
+    const primaryDeck = files[firstDeckIndex];
+
+    window.ImageViewer.State.setMessage("Opening " + primaryDeck.name + "...");
+
+    let primary;
+    try {
+      primary = await window.ImageViewer.DeckFile.readDeck(primaryDeck);
+    } catch (error) {
+      window.ImageViewer.State.setMessage(primaryDeck.name + " is not a valid .deck file");
+      return;
+    }
+
+    const images = primary.images.slice();
+    const selections = primary.selections.slice();
+    const skipped = [];
+
+    for (let index = 0; index < files.length; index += 1) {
+      if (index === firstDeckIndex) {
+        continue;
+      }
+      const file = files[index];
+      try {
+        if (isDeckFile(file)) {
+          const deck = await window.ImageViewer.DeckFile.readDeck(file);
+          images.push.apply(images, deck.images);
+          selections.push.apply(selections, deck.selections);
+        } else if (isSupportedCandidate(file)) {
+          images.push.apply(images, await decodeOneFile(file));
+        } else {
+          skipped.push(file.name);
+        }
+      } catch (error) {
+        skipped.push(file.name);
+      }
+    }
+
+    window.ImageViewer.State.clearImages();
+    window.ImageViewer.State.addImages(images);
+    applyDeckSelections(selections);
+
+    if (skipped.length) {
+      window.ImageViewer.State.setMessage("Opened " + primaryDeck.name + ", skipped " + skipped.length + " file" + (skipped.length === 1 ? "" : "s"));
+    } else {
+      window.ImageViewer.State.setMessage("Opened " + primaryDeck.name + " (" + images.length + " image" + (images.length === 1 ? "" : "s") + ")");
+    }
+  }
+
+  // Restore which ICO frame / SVG sprite entry was being viewed, applied after
+  // the images are in state (these helpers look the image up by id). Both no-op
+  // when the value already matches the default, so passing every entry is safe.
+  function applyDeckSelections(selections) {
+    selections.forEach((selection) => {
+      if (selection.ico) {
+        window.ImageViewer.State.selectIcoFrame(selection.id, selection.ico);
+      }
+      if (selection.svg) {
+        window.ImageViewer.State.selectSvgSpriteEntry(selection.id, selection.svg);
+      }
+    });
+  }
+
+  function isDeckFile(file) {
+    return getExtension(file.name) === "deck";
   }
 
   function decodeNativeImage(file) {
@@ -214,7 +304,8 @@
           displayMode: "native",
           animated: false,
           hasTransparency: formatSupportsAlpha(format) && window.ImageViewer.Thumbnail.detectTransparency(img, width, height),
-          sourceMode: "Native browser display"
+          sourceMode: "Native browser display",
+          sourceFile: file
         });
       };
 
@@ -280,7 +371,8 @@
       animated: info.animated,
       // Vector documents render on a transparent canvas, so the backdrop applies.
       hasTransparency: true,
-      sourceMode: info.animated ? "Live animated SVG document" : "Live SVG document"
+      sourceMode: info.animated ? "Live animated SVG document" : "Live SVG document",
+      sourceFile: file
     };
   }
 
@@ -316,7 +408,8 @@
       hasTransparency: true,
       sourceMode: "SVG sprite: " + selectedEntry.label,
       svgSpriteEntries: spriteEntries,
-      svgSelectedSpriteEntryId: selectedEntry.id
+      svgSelectedSpriteEntryId: selectedEntry.id,
+      sourceFile: file
     };
   }
 
@@ -750,6 +843,7 @@
   window.ImageViewer = window.ImageViewer || {};
   window.ImageViewer.FileLoader = {
     init,
-    loadFiles
+    loadFiles,
+    decodeOneFile
   };
 }());

@@ -850,7 +850,7 @@ body.is-reordering-images * {
   transform: scale(.96);
 }
 
-.viewer-panel.is-fullscreen #viewerImage,
+.viewer-panel.is-fullscreen .raster-surface,
 .viewer-panel.is-fullscreen #viewerCanvas,
 .viewer-panel.is-fullscreen .svg-surface {
   box-shadow: none;
@@ -929,14 +929,14 @@ body.is-reordering-images * {
   cursor: grabbing;
 }
 
-.viewport.is-panning #viewerImage,
+.viewport.is-panning .raster-surface,
 .viewport.is-panning #viewerCanvas,
 .viewport.is-panning .svg-surface,
 .viewport.is-vector-zooming .svg-surface {
   box-shadow: none;
 }
 
-#viewerImage,
+.raster-surface,
 #viewerCanvas,
 .svg-surface {
   position: absolute;
@@ -963,13 +963,13 @@ body.is-reordering-images * {
   backface-visibility: hidden;
 }
 
-#viewerImage,
+.raster-surface,
 .svg-surface,
 .thumb {
   -webkit-user-drag: none;
 }
 
-#viewerImage.is-visible,
+.raster-surface.is-visible,
 #viewerCanvas.is-visible,
 .svg-surface.is-visible {
   display: block;

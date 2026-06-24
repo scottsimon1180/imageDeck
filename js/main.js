@@ -13,6 +13,8 @@
       window.ImageViewer.Viewer.render(snapshot);
       window.ImageViewer.Controls.render(snapshot);
     });
+
+    window.ImageViewer.Pwa.init();
   }
 
   if (document.readyState === "loading") {

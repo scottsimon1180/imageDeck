@@ -62,12 +62,24 @@
   let viewerSettings = Object.assign({}, DEFAULT_VIEWER_SETTINGS);
   let svgSurfaceUseCounter = 0;
   const svgSurfaces = new Map();
+  // Native raster uses two <img> buffers so the current image stays visible
+  // until the next one is decoded (a clean cut, no blank frame). viewerImage is
+  // the transform target (the hidden buffer being loaded, or the visible one at
+  // rest); visibleRasterBuffer is whichever is currently shown.
+  let rasterBufferA;
+  let rasterBufferB;
+  let visibleRasterBuffer;
+  let rasterLoadToken = 0;
+  const rasterPrefetch = new Map();
 
   function init() {
     viewerPanel = document.querySelector(".viewer-panel");
     viewerFooter = document.querySelector(".viewer-footer");
     viewport = document.getElementById("viewport");
-    viewerImage = document.getElementById("viewerImage");
+    rasterBufferA = document.getElementById("viewerImage");
+    rasterBufferB = document.getElementById("viewerImageB");
+    viewerImage = rasterBufferA;
+    visibleRasterBuffer = rasterBufferA;
     viewerCanvas = document.getElementById("viewerCanvas");
     fullscreenCursor = document.getElementById("fullscreenCursor");
     toolbarDragHandle = document.getElementById("toolbarDragHandle");
@@ -133,61 +145,183 @@
       defaultViewForActiveImage();
     }
 
+    prefetchNeighbors(snapshot, nextImage);
     updateMeta();
     updateFullscreenToolbarName();
   }
 
   function loadActiveImage() {
-    viewerImage.classList.remove("is-visible");
+    if (activeImage.displayMode === "tiff-canvas") {
+      loadTiffCanvas();
+      return;
+    }
+
+    if (activeImage.displayMode === "svg-vector") {
+      loadSvgVector();
+      return;
+    }
+
+    loadNativeImage();
+  }
+
+  function loadTiffCanvas() {
+    hideRasterBuffers();
+    if (viewerSvg) {
+      viewerSvg.classList.remove("is-visible");
+    }
+
+    viewerCanvas.width = activeImage.width;
+    viewerCanvas.height = activeImage.height;
+    viewerCanvas.style.width = activeImage.width + "px";
+    viewerCanvas.style.height = activeImage.height + "px";
+
+    const context = viewerCanvas.getContext("2d", { alpha: true });
+    if (!context) {
+      window.ImageViewer.State.setMessage("Canvas rendering is not available");
+      return;
+    }
+    context.clearRect(0, 0, activeImage.width, activeImage.height);
+    context.drawImage(activeImage.canvas, 0, 0);
+    viewerCanvas.classList.add("is-visible");
+  }
+
+  function loadSvgVector() {
+    hideRasterBuffers();
     viewerCanvas.classList.remove("is-visible");
     if (viewerSvg) {
       viewerSvg.classList.remove("is-visible");
     }
 
-    if (activeImage.displayMode === "tiff-canvas") {
-      viewerCanvas.width = activeImage.width;
-      viewerCanvas.height = activeImage.height;
-      viewerCanvas.style.width = activeImage.width + "px";
-      viewerCanvas.style.height = activeImage.height + "px";
+    // Recently viewed SVGs keep their own <object> (see ensureSvgSurface), so
+    // common back-and-forth switching does not reload the vector document.
+    const surface = ensureSvgSurface(activeImage);
+    viewerSvg = surface;
 
-      const context = viewerCanvas.getContext("2d", { alpha: true });
-      if (!context) {
-        window.ImageViewer.State.setMessage("Canvas rendering is not available");
+    // Apply the fit synchronously so a reused (already loaded) surface paints in
+    // the right place on the very first frame, with no size or position flash.
+    const fit = getFitScale(viewport.getBoundingClientRect());
+    const fitWidth = Math.max(1, Math.round(activeImage.width * fit));
+    const fitHeight = Math.max(1, Math.round(activeImage.height * fit));
+    surface.style.width = fitWidth + "px";
+    surface.style.height = fitHeight + "px";
+    surface.style.transform = "translate3d(-50%, -50%, 0)";
+    renderedVectorWidth = fitWidth;
+    renderedVectorHeight = fitHeight;
+    renderedVectorScale = fit;
+    surface.classList.add("is-visible");
+    pruneSvgSurfaceCache(getSvgSurfaceId(activeImage));
+  }
+
+  // Decode-gated double buffer: the visible image is left untouched while the
+  // next one loads into the hidden back buffer; only once it is decoded do we
+  // flip visibility in a single step. Transform writes (the synchronous fit that
+  // follows in render) target the hidden back buffer via viewerImage, so the
+  // still-visible old image is never disturbed mid-switch.
+  function loadNativeImage() {
+    const token = ++rasterLoadToken;
+    const back = getBackRasterBuffer();
+    const targetImage = activeImage;
+
+    back.src = activeImage.objectUrl;
+    back.alt = activeImage.displayName;
+    back.style.width = activeImage.width + "px";
+    back.style.height = activeImage.height + "px";
+    viewerImage = back;
+
+    const finalize = function () {
+      // Bail if a newer navigation superseded this load (fast key-repeat thumbing).
+      if (token !== rasterLoadToken || activeImage !== targetImage) {
         return;
       }
-      context.clearRect(0, 0, activeImage.width, activeImage.height);
-      context.drawImage(activeImage.canvas, 0, 0);
-      viewerCanvas.classList.add("is-visible");
+      applyTransform();
+      revealRasterBuffer(back);
+    };
+
+    if (typeof back.decode === "function") {
+      // Reveal on success or failure; these images already decoded once at import,
+      // so a rejection is rare and we still prefer showing the image to a blank.
+      back.decode().then(finalize, finalize);
       return;
     }
 
-    if (activeImage.displayMode === "svg-vector") {
-      // Recently viewed SVGs keep their own <object> (see ensureSvgSurface), so
-      // common back-and-forth switching does not reload the vector document.
-      const surface = ensureSvgSurface(activeImage);
-      viewerSvg = surface;
+    const onLoad = function () {
+      back.removeEventListener("load", onLoad);
+      finalize();
+    };
+    back.addEventListener("load", onLoad);
+  }
 
-      // Apply the fit synchronously so a reused (already loaded) surface paints in
-      // the right place on the very first frame, with no size or position flash.
-      const fit = getFitScale(viewport.getBoundingClientRect());
-      const fitWidth = Math.max(1, Math.round(activeImage.width * fit));
-      const fitHeight = Math.max(1, Math.round(activeImage.height * fit));
-      surface.style.width = fitWidth + "px";
-      surface.style.height = fitHeight + "px";
-      surface.style.transform = "translate3d(-50%, -50%, 0)";
-      renderedVectorWidth = fitWidth;
-      renderedVectorHeight = fitHeight;
-      renderedVectorScale = fit;
-      surface.classList.add("is-visible");
-      pruneSvgSurfaceCache(getSvgSurfaceId(activeImage));
+  function getBackRasterBuffer() {
+    return visibleRasterBuffer === rasterBufferA ? rasterBufferB : rasterBufferA;
+  }
+
+  function revealRasterBuffer(back) {
+    viewerImage = back;
+    visibleRasterBuffer = back;
+    (back === rasterBufferA ? rasterBufferB : rasterBufferA).classList.remove("is-visible");
+    viewerCanvas.classList.remove("is-visible");
+    if (viewerSvg) {
+      viewerSvg.classList.remove("is-visible");
+    }
+    back.classList.add("is-visible");
+  }
+
+  function hideRasterBuffers() {
+    rasterBufferA.classList.remove("is-visible");
+    rasterBufferB.classList.remove("is-visible");
+  }
+
+  // Pre-decode the immediate neighbors so thumbing to them is instant. Animated
+  // GIF/APNG are skipped so they start their animation fresh when viewed (and do
+  // not decode off-screen); animated SVGs are displayMode "svg-vector" and never
+  // reach this native path.
+  function prefetchNeighbors(snapshot, currentImage) {
+    const images = snapshot.images;
+    if (images.length < 2) {
+      clearRasterPrefetch();
       return;
     }
 
-    viewerImage.src = activeImage.objectUrl;
-    viewerImage.alt = activeImage.displayName;
-    viewerImage.style.width = activeImage.width + "px";
-    viewerImage.style.height = activeImage.height + "px";
-    viewerImage.classList.add("is-visible");
+    const index = images.findIndex(function (image) {
+      return image.id === currentImage.id;
+    });
+    if (index === -1) {
+      return;
+    }
+
+    const wanted = new Set();
+    [images[index - 1], images[index + 1]].forEach(function (image) {
+      if (!isPrefetchableNeighbor(image)) {
+        return;
+      }
+      wanted.add(image.objectUrl);
+      if (!rasterPrefetch.has(image.objectUrl)) {
+        const loader = new Image();
+        loader.src = image.objectUrl;
+        if (typeof loader.decode === "function") {
+          loader.decode().catch(function () {});
+        }
+        rasterPrefetch.set(image.objectUrl, loader);
+      }
+    });
+
+    Array.from(rasterPrefetch.keys()).forEach(function (url) {
+      if (!wanted.has(url)) {
+        rasterPrefetch.delete(url);
+      }
+    });
+  }
+
+  function isPrefetchableNeighbor(image) {
+    if (!image || image.displayMode !== "native" || !image.objectUrl) {
+      return false;
+    }
+    const mime = (image.mimeType || "").toLowerCase();
+    return mime !== "image/gif" && mime !== "image/apng";
+  }
+
+  function clearRasterPrefetch() {
+    rasterPrefetch.clear();
   }
 
   // Reassigning a single <object>'s `data` is both unreliable (stale/duplicate
@@ -849,12 +983,18 @@
   }
 
   function clearSurface() {
-    viewerImage.removeAttribute("src");
-    viewerImage.alt = "";
-    viewerImage.classList.remove("is-visible");
-    viewerImage.style.removeProperty("width");
-    viewerImage.style.removeProperty("height");
-    viewerImage.style.removeProperty("transform");
+    ++rasterLoadToken; // cancel any in-flight decode-reveal
+    [rasterBufferA, rasterBufferB].forEach(function (buffer) {
+      buffer.removeAttribute("src");
+      buffer.alt = "";
+      buffer.classList.remove("is-visible");
+      buffer.style.removeProperty("width");
+      buffer.style.removeProperty("height");
+      buffer.style.removeProperty("transform");
+    });
+    viewerImage = rasterBufferA;
+    visibleRasterBuffer = rasterBufferA;
+    clearRasterPrefetch();
 
     viewerCanvas.classList.remove("is-visible");
     viewerCanvas.width = 0;

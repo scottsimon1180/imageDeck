@@ -63,7 +63,8 @@
       hasTransparency: window.ImageViewer.Thumbnail.detectTransparency(selectedImage, selectedFrame.width, selectedFrame.height),
       sourceMode: "ICO size " + selectedFrame.label,
       icoFrames,
-      icoSelectedFrameId: selectedFrame.id
+      icoSelectedFrameId: selectedFrame.id,
+      sourceFile: file
     };
   }
 
