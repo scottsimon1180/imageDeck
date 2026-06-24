@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Viewer</title>
+  <link rel="icon" type="image/png" sizes="1240x1240" href="images/icon-1240.png">
+  <link rel="apple-touch-icon" href="images/icon-1240.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true">
+    <symbol id="plus" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M12,5v14M5,12h14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></g></g></g></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M4,7h16M10,11v6M14,11v6M6,7l1,14h10l1,-14M9,7l1,-3h4l1,3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M6,6l12,12M18,6L6,18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></g></g></g></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M3,7c0,-1.66,1.34,-3,3,-3h12c1.66,0,3,1.34,3,3v10c0,1.66,-1.34,3,-3,3H6c-1.66,0,-3,-1.34,-3,-3V7zM7,16l3.5,-4l3,3l2,-2.2L19,16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5,10c0.77,0,1.4,-0.63,1.4,-1.4s-0.63,-1.4,-1.4,-1.4s-1.4,0.63,-1.4,1.4S7.73,10,8.5,10z" fill="currentColor" stroke="none"/></g></g></g></symbol>
+    <symbol id="download" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M12,4v10M8,10l4,4l4,-4M5,19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="chevron-left" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M15,5l-7,7l7,7" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="chevron-right" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M9,5l7,7l-7,7" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="chevron-down" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M6,9l6,6l6,-6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="zoom-in" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M10.5,17c3.59,0,6.5,-2.91,6.5,-6.5S14.09,4,10.5,4S4,6.91,4,10.5S6.91,17,10.5,17zM10.5,7.5v6M7.5,10.5h6M15.5,15.5L21,21" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="zoom-out" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M10.5,17c3.59,0,6.5,-2.91,6.5,-6.5S14.09,4,10.5,4S4,6.91,4,10.5S6.91,17,10.5,17zM7.5,10.5h6M15.5,15.5L21,21" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="fit" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M8,4H5C4.45,4,4,4.45,4,5v3M16,4h3c0.55,0,1,0.45,1,1v3M8,20H5c-0.55,0,-1,-0.45,-1,-1v-3M16,20h3c0.55,0,1,-0.45,1,-1v-3M9,9h6v6H9z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="fullscreen" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M4.5,9V5.5c0,-0.55,0.45,-1,1,-1H9M15,4.5h3.5c0.55,0,1,0.45,1,1V9M19.5,15v3.5c0,0.55,-0.45,1,-1,1H15M9,19.5H5.5c-0.55,0,-1,-0.45,-1,-1V15" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="fullscreen-exit" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M9,4.5V8c0,0.55,-0.45,1,-1,1H4.5M15,4.5V8c0,0.55,0.45,1,1,1h3.5M19.5,15H16c-0.55,0,-1,0.45,-1,1v3.5M4.5,15H8c0.55,0,1,0.45,1,1v3.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></symbol>
+    <symbol id="toolbar-grip" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M6.5,8h11M6.5,12h11M6.5,16h11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></g></g></g></symbol>
+    <symbol id="settings-gear" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M10.45,3.25h3.1l0.55,1.78c0.5,0.16,0.98,0.36,1.43,0.61l1.65,-0.87l2.19,2.19l-0.87,1.65c0.25,0.45,0.45,0.93,0.61,1.43l1.78,0.55v3.1l-1.78,0.55c-0.16,0.5,-0.36,0.98,-0.61,1.43l0.87,1.65l-2.19,2.19l-1.65,-0.87c-0.45,0.25,-0.93,0.45,-1.43,0.61l-0.55,1.78h-3.1L9.9,19.25c-0.5,-0.16,-0.98,-0.36,-1.43,-0.61l-1.65,0.87l-2.19,-2.19l0.87,-1.65c-0.25,-0.45,-0.45,-0.93,-0.61,-1.43l-1.78,-0.55v-3.1l1.78,-0.55c0.16,-0.5,0.36,-0.98,0.61,-1.43L4.63,6.96l2.19,-2.19l1.65,0.87C8.92,5.39,9.4,5.19,9.9,5.03z" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,15.35c1.85,0,3.35,-1.5,3.35,-3.35S13.85,8.65,12,8.65S8.65,10.15,8.65,12S10.15,15.35,12,15.35z" fill="none" stroke="currentColor" stroke-width="1.85"/></g></g></g></symbol>
+    <symbol id="transparency" viewBox="0 0 24 24"><defs><clipPath id="transparencyClip"><rect x="4" y="4" width="16" height="16" rx="3"/></clipPath></defs><g clip-path="url(#transparencyClip)"><rect x="4" y="4" width="8" height="8" fill="currentColor"/><rect x="12" y="12" width="8" height="8" fill="currentColor"/></g><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+    <aside class="images-panel" aria-label="Loaded images">
+      <header class="panel-header">
+        <h1>Image Deck</h1>
+        <p id="imageCount">0 loaded</p>
+      </header>
+
+      <input
+        id="imageInput"
+        class="visually-hidden"
+        type="file"
+        accept="image/*,.png,.jpg,.jpeg,.jpe,.gif,.bmp,.dib,.ico,.cur,.svg,.tif,.tiff,.webp,.avif"
+        multiple
+      >
+
+      <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-target-mark">
+          <svg aria-hidden="true"><use href="#download"></use></svg>
+        </div>
+        <span>Drop images</span>
+      </div>
+
+      <ul class="image-list" id="imageList" aria-label="Image list"></ul>
+
+      <div class="list-empty" id="listEmpty">
+        <svg aria-hidden="true"><use href="#image"></use></svg>
+        <span>No images loaded</span>
+      </div>
+
+      <footer class="panel-footer" aria-label="Image actions">
+        <div class="panel-actions">
+          <button class="icon-btn layers-download-btn" id="downloadDeckBtn" type="button" aria-label="Download deck" title="Download deck">
+            <svg class="layers-download-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g class="layers-rest">
+                <polyline class="rest-layer rest-bottom" points="17.16 14.14 21.37 16.27 12 21.09 2.63 16.27 6.76 14.1"/>
+                <polyline class="rest-layer rest-middle" points="17.18 9.86 21.37 11.97 12 16.8 2.63 11.97 6.74 9.82"/>
+                <polygon class="rest-layer rest-top" points="21.37 7.7 12 12.53 2.63 7.7 11.82 2.88 21.37 7.7"/>
+              </g>
+              <g class="layers-hover">
+                <polyline class="hover-layer hover-bottom" points="18.63 10.45 21.37 11.83 12 16.66 2.63 11.83 5.32 10.42"/>
+                <polyline class="hover-layer hover-middle" points="17.18 6.92 21.37 9.04 12 13.86 2.63 9.04 6.74 6.88"/>
+                <polygon class="hover-layer hover-top" points="21.37 6.27 12 11.09 2.63 6.27 11.82 1.44 21.37 6.27"/>
+              </g>
+              <g class="download-arrow">
+                <polyline points="12.06 22.56 8.37 19.61 12.06 22.56 15.75 19.61"/>
+                <line x1="12.06" y1="16.66" x2="12.06" y2="22.56"/>
+              </g>
+            </svg>
+          </button>
+          <button class="clear-images-btn" id="clearImagesBtn" type="button" aria-label="Clear all images" title="Clear all">clear</button>
+          <button class="icon-btn primary-icon" id="addImagesBtn" type="button" aria-label="Add images" title="Add images">
+            <svg aria-hidden="true"><use href="#plus"></use></svg>
+          </button>
+        </div>
+      </footer>
+    </aside>
+
+    <main class="viewer-panel" aria-label="Image viewer">
+      <section class="viewer-frame" id="dropZone" aria-label="Image workspace">
+        <button class="empty-state" id="emptyState" type="button">
+          <svg aria-hidden="true"><use href="#image"></use></svg>
+          <span>Select images</span>
+        </button>
+
+        <div class="viewport" id="viewport">
+          <img id="viewerImage" alt="" draggable="false">
+          <canvas id="viewerCanvas"></canvas>
+        </div>
+      </section>
+
+      <footer class="viewer-footer">
+        <div class="viewer-meta-area">
+          <div class="image-meta" id="imageMeta" aria-live="polite">
+            Ready
+          </div>
+          <div class="variant-control" id="variantControl" hidden>
+            <button
+              class="variant-button"
+              id="variantButton"
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="variantMenu"
+              aria-label="Image variant"
+            >
+              <span class="variant-value" id="variantValue"></span>
+              <svg aria-hidden="true"><use href="#chevron-down"></use></svg>
+            </button>
+            <ul class="variant-menu" id="variantMenu" role="listbox" aria-label="Image variant" hidden></ul>
+          </div>
+        </div>
+
+        <div class="viewer-toolbar-area">
+          <nav class="viewer-toolbar" aria-label="Viewer controls">
+            <span class="fullscreen-toolbar-name" id="fullscreenToolbarName"></span>
+            <button class="tool-btn" type="button" data-action="previous" aria-label="Previous image" title="Previous image">
+              <svg aria-hidden="true"><use href="#chevron-left"></use></svg>
+            </button>
+            <button class="tool-btn" type="button" data-action="next" aria-label="Next image" title="Next image">
+              <svg aria-hidden="true"><use href="#chevron-right"></use></svg>
+            </button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <button class="tool-btn" type="button" data-action="zoom-out" aria-label="Zoom out" title="Zoom out">
+              <svg aria-hidden="true"><use href="#zoom-out"></use></svg>
+            </button>
+            <output class="zoom-readout" id="zoomReadout" aria-live="polite">100%</output>
+            <button class="tool-btn" type="button" data-action="zoom-in" aria-label="Zoom in" title="Zoom in">
+              <svg aria-hidden="true"><use href="#zoom-in"></use></svg>
+            </button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <button class="tool-btn" type="button" data-action="fit" aria-label="Fit image" title="Fit image">
+              <svg aria-hidden="true"><use href="#fit"></use></svg>
+            </button>
+            <button class="tool-btn text-tool" type="button" data-action="actual-size" aria-label="Actual size" title="Actual size">1:1</button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <button class="tool-btn" type="button" data-action="toggle-backdrop" aria-pressed="false" aria-label="Transparency backdrop: black" title="Transparency backdrop: black. Click for white.">
+              <svg aria-hidden="true"><use href="#transparency"></use></svg>
+            </button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <button class="tool-btn" type="button" data-action="fullscreen" aria-label="Enter full screen" aria-pressed="false" title="Enter full screen">
+              <svg aria-hidden="true"><use href="#fullscreen"></use></svg>
+            </button>
+            <span class="toolbar-drag-handle" id="toolbarDragHandle" role="button" tabindex="0" aria-label="Move full screen toolbar" title="Drag toolbar. Double click to reset.">
+              <svg aria-hidden="true"><use href="#toolbar-grip"></use></svg>
+            </span>
+          </nav>
+
+          <button class="settings-btn" id="settingsButton" type="button" aria-label="Open settings" aria-controls="settingsPopover" aria-expanded="false" title="Settings">
+            <svg aria-hidden="true"><use href="#settings-gear"></use></svg>
+          </button>
+        </div>
+      </footer>
+
+      <div class="fullscreen-cursor" id="fullscreenCursor" aria-hidden="true">
+        <svg viewBox="0 0 24 28" focusable="false" aria-hidden="true">
+          <path d="M4.5,3.5l14.7,14.3l-7.2,0.9l-3.2,6.3L4.5,3.5z" fill="currentColor"/>
+          <path d="M4.5,3.5l14.7,14.3l-7.2,0.9l-3.2,6.3L4.5,3.5z" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.35" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="settings-popover" id="settingsPopover" role="dialog" aria-labelledby="settingsTitle" tabindex="-1" hidden>
+        <div class="settings-window">
+          <header class="settings-header">
+            <div>
+              <p class="settings-eyebrow">Viewer</p>
+              <h2 id="settingsTitle">Settings</h2>
+            </div>
+            <button class="settings-close-btn" id="settingsCloseButton" type="button" aria-label="Close settings" title="Close settings">
+              <svg aria-hidden="true"><use href="#x"></use></svg>
+            </button>
+          </header>
+
+          <div class="settings-content">
+            <section class="settings-section" aria-labelledby="settingsAppearanceTitle">
+              <h3 id="settingsAppearanceTitle">Appearance</h3>
+              <fieldset class="settings-fieldset">
+                <legend>Mode</legend>
+                <div class="segmented-control" role="group" aria-label="Mode">
+                  <label>
+                    <input type="radio" name="setting-theme-mode" value="light" data-setting="themeMode">
+                    <span>Light</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-theme-mode" value="dark" data-setting="themeMode">
+                    <span>Dark</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-theme-mode" value="auto" data-setting="themeMode">
+                    <span>Auto</span>
+                  </label>
+                </div>
+              </fieldset>
+            </section>
+
+            <section class="settings-section" aria-labelledby="settingsViewerTitle">
+              <h3 id="settingsViewerTitle">Viewer</h3>
+              <fieldset class="settings-fieldset">
+                <legend>Toolbar position</legend>
+                <div class="segmented-control two-up" role="group" aria-label="Toolbar position">
+                  <label>
+                    <input type="radio" name="setting-toolbar-position" value="bottom" data-setting="toolbarPosition">
+                    <span>Bottom</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-toolbar-position" value="top" data-setting="toolbarPosition">
+                    <span>Top</span>
+                  </label>
+                </div>
+              </fieldset>
+            </section>
+
+            <section class="settings-section" aria-labelledby="settingsFullscreenTitle">
+              <h3 id="settingsFullscreenTitle">Full screen</h3>
+              <fieldset class="settings-fieldset">
+                <legend>Toolbar default</legend>
+                <div class="placement-grid" role="group" aria-label="Full screen toolbar default">
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="top-left" data-setting="fullscreenToolbarPosition">
+                    <span>Top left</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="top-center" data-setting="fullscreenToolbarPosition">
+                    <span>Top center</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="top-right" data-setting="fullscreenToolbarPosition">
+                    <span>Top right</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="left" data-setting="fullscreenToolbarPosition">
+                    <span>Left</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="bottom-left" data-setting="fullscreenToolbarPosition">
+                    <span>Bottom left</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="bottom-center" data-setting="fullscreenToolbarPosition">
+                    <span>Bottom center</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="setting-fullscreen-toolbar-position" value="bottom-right" data-setting="fullscreenToolbarPosition">
+                    <span>Bottom right</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <label class="toggle-row">
+                <span>Image name</span>
+                <input type="checkbox" data-setting="fullscreenShowImageName">
+                <span class="toggle-visual" aria-hidden="true"><span></span></span>
+              </label>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/vendor/pako.min.js"></script>
+  <script src="js/vendor/utif.min.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/thumbnail.js"></script>
+  <script src="js/icoAdapter.js"></script>
+  <script src="js/tiffAdapter.js"></script>
+  <script src="js/viewer.js"></script>
+  <script src="js/imageList.js"></script>
+  <script src="js/fileLoader.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
