@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "image-viewer-static-v1";
+const CACHE_NAME = "image-viewer-static-v2";
 const APP_SHELL = [
   "./",
   "./index.html",

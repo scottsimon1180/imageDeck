@@ -24,11 +24,17 @@
     ]),
     transparencyBackdrop: new Set(["black", "white"])
   };
+  const THEME_COLORS = {
+    light: "#fbfbfd",
+    dark: "#1a1a1e"
+  };
 
   let settings = loadSettings();
   let settingsButton;
   let settingsPopover;
   let settingsCloseButton;
+  let themeColorMeta;
+  let colorSchemeQuery;
   let previousFocus = null;
   const listeners = new Set();
 
@@ -36,8 +42,11 @@
     settingsButton = document.getElementById("settingsButton");
     settingsPopover = document.getElementById("settingsPopover");
     settingsCloseButton = document.getElementById("settingsCloseButton");
+    themeColorMeta = document.getElementById("themeColorMeta") || document.querySelector("meta[name='theme-color']");
+    colorSchemeQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
     applyDocumentSettings();
+    bindColorSchemeListener();
 
     if (!settingsButton || !settingsPopover || !settingsCloseButton) {
       return;
@@ -169,6 +178,37 @@
 
   function applyDocumentSettings() {
     document.documentElement.dataset.themeMode = settings.themeMode;
+    applyThemeColor();
+  }
+
+  function bindColorSchemeListener() {
+    if (!colorSchemeQuery) {
+      return;
+    }
+
+    if (typeof colorSchemeQuery.addEventListener === "function") {
+      colorSchemeQuery.addEventListener("change", applyThemeColor);
+    } else if (typeof colorSchemeQuery.addListener === "function") {
+      colorSchemeQuery.addListener(applyThemeColor);
+    }
+  }
+
+  function applyThemeColor() {
+    if (!themeColorMeta) {
+      return;
+    }
+
+    themeColorMeta.setAttribute("content", THEME_COLORS[getResolvedThemeMode()]);
+  }
+
+  function getResolvedThemeMode() {
+    if (settings.themeMode === "dark") {
+      return "dark";
+    }
+    if (settings.themeMode === "auto" && colorSchemeQuery && colorSchemeQuery.matches) {
+      return "dark";
+    }
+    return "light";
   }
 
   function loadSettings() {
