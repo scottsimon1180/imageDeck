@@ -157,6 +157,10 @@ button {
   overflow: hidden;
 }
 
+.app-titlebar {
+  display: none;
+}
+
 button:focus-visible,
 .image-row:focus-visible {
   outline: 3px solid rgba(0, 122, 255, .36);
@@ -170,6 +174,119 @@ button:focus-visible,
   display: grid;
   grid-template-columns: minmax(240px, var(--left-width)) minmax(0, 1fr);
   gap: 14px;
+}
+
+@media (display-mode: window-controls-overlay) {
+  :root {
+    --app-titlebar-height: env(titlebar-area-height, 34px);
+  }
+
+  .app-titlebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 200;
+    height: var(--app-titlebar-height);
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(0, 122, 255, .08), transparent 32%),
+      linear-gradient(180deg, var(--body-top) 0%, var(--app-bg) 100%);
+    color: var(--text);
+    display: block;
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  .app-titlebar-safe-area {
+    position: absolute;
+    top: env(titlebar-area-y, 0);
+    left: env(titlebar-area-x, 0);
+    width: env(titlebar-area-width, 100vw);
+    height: var(--app-titlebar-height);
+    min-width: 0;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .app-titlebar-toggle {
+    width: 27px;
+    height: 27px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--button);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app-titlebar-toggle:hover,
+  .app-titlebar-toggle:focus-visible {
+    color: var(--text);
+    background: var(--button-press);
+  }
+
+  .app-titlebar-toggle:active {
+    transform: scale(.96);
+  }
+
+  .app-titlebar-toggle svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    transition: transform .16s ease;
+  }
+
+  .app-titlebar-name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: 0;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-titlebar-collapsed="false"] .app-shell {
+    padding-top: calc(16px + var(--app-titlebar-height));
+  }
+
+  html[data-titlebar-collapsed="false"] .app-titlebar-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  html[data-titlebar-collapsed="true"] .app-titlebar {
+    border-bottom-color: transparent;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  html[data-titlebar-collapsed="true"] .app-titlebar-safe-area {
+    pointer-events: none;
+  }
+
+  html[data-titlebar-collapsed="true"] .app-titlebar-toggle {
+    border-color: var(--line-strong);
+    background: var(--panel-bg);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .12);
+    pointer-events: auto;
+    backdrop-filter: blur(16px);
+  }
+
+  html[data-titlebar-collapsed="true"] .app-titlebar-name {
+    display: none;
+  }
 }
 
 .images-panel,
@@ -1750,6 +1867,12 @@ body.is-reordering-images * {
 
   .viewer-toolbar {
     justify-self: center;
+  }
+}
+
+@media (display-mode: window-controls-overlay) and (max-width: 820px) {
+  html[data-titlebar-collapsed="false"] .app-shell {
+    padding-top: calc(10px + var(--app-titlebar-height));
   }
 }
 

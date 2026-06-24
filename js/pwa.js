@@ -1,9 +1,13 @@
 (function () {
   "use strict";
 
+  let titlebarToggle;
+  let titlebarCollapsed = true;
+
   function init() {
     registerServiceWorker();
     registerFileLaunchHandler();
+    initTitlebarControls();
   }
 
   function registerServiceWorker() {
@@ -19,7 +23,7 @@
   }
 
   function registerFileLaunchHandler() {
-    if (!window.launchQueue || typeof window.launchQueue.setConsumer !== "function") {
+    if (!canHandleLaunchedFiles()) {
       return;
     }
 
@@ -47,6 +51,43 @@
         window.ImageViewer.State.setMessage("Couldn't open launched file");
       }
     });
+  }
+
+  function canHandleLaunchedFiles() {
+    if (!window.launchQueue || typeof window.launchQueue.setConsumer !== "function") {
+      return false;
+    }
+    if (!("LaunchParams" in window) || !window.LaunchParams.prototype) {
+      return true;
+    }
+    return "files" in window.LaunchParams.prototype;
+  }
+
+  function initTitlebarControls() {
+    titlebarToggle = document.getElementById("appTitlebarToggle");
+    if (!titlebarToggle || !window.ImageViewer.Settings) {
+      return;
+    }
+
+    titlebarToggle.addEventListener("click", toggleTitlebar);
+    window.ImageViewer.Settings.subscribe(handleSettingsChange);
+  }
+
+  function handleSettingsChange(nextSettings) {
+    titlebarCollapsed = nextSettings.titlebarCollapsed === true;
+    document.documentElement.dataset.titlebarCollapsed = titlebarCollapsed ? "true" : "false";
+    updateTitlebarToggle();
+  }
+
+  function toggleTitlebar() {
+    window.ImageViewer.Settings.setSetting("titlebarCollapsed", !titlebarCollapsed);
+  }
+
+  function updateTitlebarToggle() {
+    const label = titlebarCollapsed ? "Expand window bar" : "Collapse window bar";
+    titlebarToggle.setAttribute("aria-label", label);
+    titlebarToggle.setAttribute("aria-pressed", titlebarCollapsed ? "true" : "false");
+    titlebarToggle.title = label;
   }
 
   function isServedOverHttp() {

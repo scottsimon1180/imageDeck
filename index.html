@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-titlebar-collapsed="true">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A local-first image viewer for browsing, ordering, and saving mixed image decks.">
+  <meta name="description" content="Image Deck is a local-first app for browsing, ordering, and saving mixed image decks.">
   <meta name="application-name" content="Image Deck">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta id="themeColorMeta" name="theme-color" content="#fbfbfd">
   <meta name="msapplication-TileColor" content="#007aff">
-  <title>Image Viewer</title>
+  <title>Image Deck</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="32x32" href="images/icon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
@@ -38,6 +38,15 @@
     <symbol id="settings-gear" viewBox="0 0 24 24"><g><g id="Layer_2"><g><path d="M10.45,3.25h3.1l0.55,1.78c0.5,0.16,0.98,0.36,1.43,0.61l1.65,-0.87l2.19,2.19l-0.87,1.65c0.25,0.45,0.45,0.93,0.61,1.43l1.78,0.55v3.1l-1.78,0.55c-0.16,0.5,-0.36,0.98,-0.61,1.43l0.87,1.65l-2.19,2.19l-1.65,-0.87c-0.45,0.25,-0.93,0.45,-1.43,0.61l-0.55,1.78h-3.1L9.9,19.25c-0.5,-0.16,-0.98,-0.36,-1.43,-0.61l-1.65,0.87l-2.19,-2.19l0.87,-1.65c-0.25,-0.45,-0.45,-0.93,-0.61,-1.43l-1.78,-0.55v-3.1l1.78,-0.55c0.16,-0.5,0.36,-0.98,0.61,-1.43L4.63,6.96l2.19,-2.19l1.65,0.87C8.92,5.39,9.4,5.19,9.9,5.03z" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,15.35c1.85,0,3.35,-1.5,3.35,-3.35S13.85,8.65,12,8.65S8.65,10.15,8.65,12S10.15,15.35,12,15.35z" fill="none" stroke="currentColor" stroke-width="1.85"/></g></g></g></symbol>
     <symbol id="transparency" viewBox="0 0 24 24"><defs><clipPath id="transparencyClip"><rect x="4" y="4" width="16" height="16" rx="3"/></clipPath></defs><g clip-path="url(#transparencyClip)"><rect x="4" y="4" width="8" height="8" fill="currentColor"/><rect x="12" y="12" width="8" height="8" fill="currentColor"/></g><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   </svg>
+
+  <div class="app-titlebar" id="appTitlebar">
+    <div class="app-titlebar-safe-area">
+      <button class="app-titlebar-toggle" id="appTitlebarToggle" type="button" aria-label="Expand window bar" aria-pressed="true" title="Expand window bar">
+        <svg aria-hidden="true"><use href="#chevron-down"></use></svg>
+      </button>
+      <span class="app-titlebar-name">Image Deck</span>
+    </div>
+  </div>
 
   <div class="app-shell">
     <aside class="images-panel" aria-label="Loaded images">
@@ -96,7 +105,7 @@
       </footer>
     </aside>
 
-    <main class="viewer-panel" aria-label="Image viewer">
+    <main class="viewer-panel" aria-label="Image Deck viewer">
       <section class="viewer-frame" id="dropZone" aria-label="Image workspace">
         <button class="empty-state" id="emptyState" type="button">
           <svg aria-hidden="true"><use href="#image"></use></svg>

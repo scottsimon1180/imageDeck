@@ -1,11 +1,12 @@
 {
-  "name": "Image Deck Viewer",
+  "name": "Image Deck",
   "short_name": "Image Deck",
-  "description": "A local-first image viewer for browsing, ordering, and saving mixed image decks.",
+  "description": "Image Deck is a local-first app for browsing, ordering, and saving mixed image decks.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "any",
   "background_color": "#fbfbfd",
   "theme_color": "#fbfbfd",
@@ -46,6 +47,27 @@
     {
       "action": "./index.html",
       "accept": {
+        "application/vnd.image-deck": [".deck"],
+        "application/x-image-deck": [".deck"],
+        "application/octet-stream": [".deck"]
+      },
+      "icons": [
+        {
+          "src": "images/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "images/icon-512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    },
+    {
+      "action": "./index.html",
+      "accept": {
         "image/png": [".png", ".apng"],
         "image/jpeg": [".jpg", ".jpeg", ".jpe"],
         "image/gif": [".gif"],
@@ -54,9 +76,9 @@
         "image/svg+xml": [".svg"],
         "image/tiff": [".tif", ".tiff"],
         "image/webp": [".webp"],
-        "image/avif": [".avif"],
-        "application/octet-stream": [".deck"]
-      }
+        "image/avif": [".avif"]
+      },
+      "launch_type": "single-client"
     }
   ]
 }

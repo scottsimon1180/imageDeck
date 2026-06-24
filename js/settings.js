@@ -8,7 +8,8 @@
     fullscreenToolbarPosition: "bottom-center",
     fullscreenShowImageName: true,
     transparencyBackdrop: "black",
-    loopImages: false
+    loopImages: false,
+    titlebarCollapsed: true
   };
   const VALID_VALUES = {
     themeMode: new Set(["light", "dark", "auto"]),
@@ -249,12 +250,13 @@
     }
     nextSettings.fullscreenShowImageName = nextSettings.fullscreenShowImageName !== false;
     nextSettings.loopImages = nextSettings.loopImages === true;
+    nextSettings.titlebarCollapsed = nextSettings.titlebarCollapsed !== false;
 
     return nextSettings;
   }
 
   function isValidSetting(name, value) {
-    if (name === "fullscreenShowImageName" || name === "loopImages") {
+    if (name === "fullscreenShowImageName" || name === "loopImages" || name === "titlebarCollapsed") {
       return typeof value === "boolean";
     }
 
